@@ -8,7 +8,8 @@ from Subnet import get_subnet_details
 from DataCenter import db_connect_create_insert_details
 from Image import image_details
 from Vnic import vnic_details
-import details 
+# import details 
+from details import logger,account_region_details
 import requests
 from requests.auth import HTTPBasicAuth
 import database
@@ -37,7 +38,7 @@ const.EXECUTION_ERROR = 'OCI Cloud Ingestion Engine Error'
 # 		details.logger.info('%s : Error in sending this response to ServiceNow.', response)
 def main():
     try:     
-        details.account_region_details()          
+        account_region_details()          
         service_account_thread =threading.Thread(target=get_service_account_details)
         availability_zone_thread =threading.Thread(target=get_availability_zone_details)
         storage_volume_thread =threading.Thread(target=get_storage_volume_details)
@@ -50,7 +51,7 @@ def main():
 
         # Zone =threading.Thread(target=get_availability_zone_details)
         # Zone =threading.Thread(target=get_availability_zone_details)
-        details.logger.info("output from main")
+        logger.info("Script start running ......................................................")
         subnet_thread.start()
         subnet_thread.join()
         
@@ -85,6 +86,7 @@ def main():
         message="*** Succesfully inserted data into table"
         # print(message)
         Snow_response.servicenow_response(message)
+        logger.info("Script -----------------------------------ended--------------------------------------------")
     except Exception as e:
         print("Error fetching in main file:", e)
 
