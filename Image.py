@@ -4,9 +4,16 @@ from datetime import datetime, timedelta
 import json
 import database
 import details
+from Snow_response import servicenow_response
+from details import logger
+from pconst import const
+
+
+
 table_name="cmdb_ci_os_template"
 # logger.error(f"Error fetching active compartments for {table_name}: {e}",exc_info=True)
 def image_details():
+    logger.info(f"start fetching details from {table_name}")
         
     def fetch_active_compartments(identity_client, compartment_id):
         active_compartments = []
@@ -15,12 +22,17 @@ def image_details():
             for compartment in compartments:
                 if compartment.name == "ManagedCompartmentForPaaS":
                     continue
+                # logger.info(f"start fetching {table_name} details from account -> {compartment.name}")
                 active_compartments.append({
                     'compartment_name': compartment.name,
                     'compartment_id': compartment.id
                 })
         except oci.exceptions.ServiceError as e:
             print("Error fetching active compartments:", e)
+            logger.error(f"Error fetching in {table_name} active compartments : {e}")
+            servicenow_response(f"{const.EXECUTION_ERROR} fetching in {table_name} active compartments : {e}")
+
+
         return active_compartments
 
     def fetch_oci_image_details(config, signer, compartment_ids):
@@ -33,6 +45,7 @@ def image_details():
 
             for compartment_id in compartment_ids:
                 for region in regions:
+                    logger.info(f"start fetching {table_name} details from account -> {compartment_id} and region is ->{region.region_name}")
                     config["region"] = region.region_name
                     compute = oci.core.ComputeClient(config=config, signer=signer)
                     instances = compute.list_instances(compartment_id).data
@@ -54,8 +67,12 @@ def image_details():
                             tags = image.defined_tags.get('Oracle-Tags', {})
                             image_info['Tags'] = {} if not tags else tags
                             image_details.append(image_info)
+            logger.info(f"Successfully fetched details of {table_name}")
         except oci.exceptions.ServiceError as e:
             print("Error fetching OCI image details:", e)
+            logger.error(f"Error fetching in {table_name} details : {e}")
+            servicenow_response(f"{const.EXECUTION_ERROR} fetching in {table_name} details : {e}")
+
 
         return image_details
 
@@ -67,7 +84,7 @@ def image_details():
 
     def db_connect_create_insert_details(config, signer):
         secret_data=database.get_secret_from_vault()
-        print(secret_data)
+        # print(secret_data)
         db_host=secret_data['db_host']
         db_user=secret_data['db_user']
         db_password=secret_data['db_pass']
@@ -124,6 +141,8 @@ def image_details():
 
                 connection.commit()
                 print("Details inserted into database successfully!")
+                logger.info(f"Data INSERT INTO db for {table_name} is successful")
+
 
         except mysql.Error as e:
             print(f"Error connecting to MySQL database or performing database operations: {e}")
@@ -146,7 +165,8 @@ def image_details():
     # Execute DB_connect_create_insert_details function finally
     db_connect_create_insert_details(config, signer)
 
-if __name__ == "__main__":      
+if __name__ == "__main__":    
+    const.EXECUTION_ERROR = 'OCI Cloud Ingestion Engine Error'  
     image_details()
     
 
