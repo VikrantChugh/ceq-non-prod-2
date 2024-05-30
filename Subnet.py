@@ -128,7 +128,7 @@ def insert_subnet(subnet_list):
                         
                     except pymysql.Error as e:
                         print(f"Error: {e}")
-                        logger.error(f"Error in {table_name} table : {e}")
+                        logger.error(f"Error in {table_name} table : {e}",exc_info=True)
                         servicenow_response(f"Error in {table_name} table : {e}")
 
 
