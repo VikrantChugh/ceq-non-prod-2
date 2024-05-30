@@ -4,6 +4,12 @@ import json
 from datetime import datetime, timedelta
 import database
 import details
+from Snow_response import servicenow_response
+from details import logger
+from pconst import const
+
+
+table_name="cmdb_ci_nic"
 
 def vnic_details():
         
@@ -16,7 +22,7 @@ def vnic_details():
     # Get details of the tenancy
     tenancy = identity_client.get_tenancy(signer.tenancy_id).data
     tenancy_id = tenancy.id
-
+    logger.info(f"start fetching details from {table_name}")
     def fetch_active_compartments(identity_client, compartment_id):
         try:
             compartments = identity_client.list_compartments(compartment_id, compartment_id_in_subtree=True, lifecycle_state='ACTIVE').data
@@ -63,17 +69,19 @@ def vnic_details():
             all_tags = {}
             for vnic_attachment in list_vnic_attachments_response.data:
                 vnic_info, tags = fetch_vnic_details(network_client, compute_client, vnic_attachment, region)
+                logger.info(f"start fetching {table_name} details from account -> {compartment_id} and region is ->{region}")
                 if vnic_info:
                     vnic_details.append(vnic_info)
                     all_tags.update(tags)
             return vnic_details, all_tags
         except oci.exceptions.ServiceError as e:
             print("Failed to fetch VNIC attachments:", e)
+            logger.error(f"Error fetching in {table_name} details : {e}")
             return [], {}
 
     def db_connect_create_insert_details():
         secret_data=database.get_secret_from_vault()
-        print(secret_data)
+        # print(secret_data)
         db_host=secret_data['db_host']
         db_user=secret_data['db_user']
         db_password=secret_data['db_pass']
@@ -112,6 +120,7 @@ def vnic_details():
                 cursor.execute(create_table_query)
                 print("Database table created successfully!")
                 
+                
                 active_compartments = fetch_active_compartments(identity_client, tenancy_id)
                 regions = [r.region_name for r in identity_client.list_region_subscriptions(tenancy_id=tenancy_id).data]
                 details_inserted = False
@@ -142,6 +151,8 @@ def vnic_details():
 
                 if details_inserted:
                     print("Details inserted into database successfully!")
+                    logger.info(f"Data INSERT INTO db for {table_name} is successful")
+
         except mysql.Error as e:
             print(f"Error: {e}")
         finally:
@@ -160,6 +171,7 @@ def vnic_details():
 
     db_connect_create_insert_details()
 
-if __name__ == "__main__":      
+if __name__ == "__main__":   
+    const.EXECUTION_ERROR = 'OCI Cloud Ingestion Engine Error'   
     vnic_details()
     
