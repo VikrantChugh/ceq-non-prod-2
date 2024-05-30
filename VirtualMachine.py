@@ -170,7 +170,7 @@ def insert_vm_details_into_database(final_list):
                 
             except pymysql.Error as e:
                 print(f"Error: {e}")
-                logger.error(f"Error in {table_name} table : {e}")
+                logger.error(f"Error in {table_name} table : {e}",exc_info=True)
                 servicenow_response(f"Error in {table_name} table : {e}")
 
         print("Data INSERT INTO cmdb_ci_vm_instance is successful")
