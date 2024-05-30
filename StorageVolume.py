@@ -171,7 +171,7 @@ def insert_storage_volume_into_db(storage_list):
                 
             except pymysql.Error as e:
                 print(f"Error: {e}")
-                logger.error(f"Error in {table_name} table : {e}")
+                logger.error(f"Error in {table_name} table : {e}",exc_info=True)
                 servicenow_response(f"Error in {table_name} table : {e}")
 
         print("Data INSERT INTO cmdb_ci_storage_volume is successful")
