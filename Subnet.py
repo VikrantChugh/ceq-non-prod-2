@@ -147,9 +147,9 @@ def insert_subnet(subnet_list):
                 servicenow_response(f"{const.EXECUTION_ERROR} inserting in {table_name} data into RDS: {str(e)}")
 
         except Exception as e:
-            print(f"Wrong database credentials: {e}")
-            logger.error(f"Wrong database credentials: {e}",exc_info=True)
-            servicenow_response(f"{const.EXECUTION_ERROR} Wrong database credentials : {str(e)}")
+            print(f"Error in connecting with db: {e}")
+            logger.error(f"Error in connecting with db: {e}",exc_info=True)
+            servicenow_response(f"{const.EXECUTION_ERROR} : {str(e)}")
 
         # except Exception as e:
         #     print(f"Error inserting in {table_name} data into RDS: {str(e)}")  
